@@ -1,5 +1,10 @@
+mod database;
+mod hash;
+
 use anyhow::{Context, Ok, Result};
 use clap::Parser;
+
+use crate::database::Database;
 
 #[derive(Parser)]
 struct Cli {
@@ -28,6 +33,9 @@ fn main() -> Result<()> {
         "get" => Operation::Get,
         _ => panic!("Operation not supported"),
     };
+
+    // create a new database
+    let db = Database::new("data.csv".to_string());
 
     println!("Operation: {:?}", operation);
     println!("Query: {}", args.query);
