@@ -1,17 +1,18 @@
 mod database;
 mod hash;
 
-use anyhow::{Context, Ok, Result};
+use anyhow::{Ok, Result};
 use clap::Parser;
 
 use crate::database::Database;
-use crate::hash::HashMap;
+
+const DB_PATH: &str = "data.csv";
 
 #[derive(Parser)]
 struct Cli {
-    /// Database operation
+    /// Database operation (insert, delete, select_all, get)
     operation: String,
-    /// The query to execute
+    /// The query to execute (depends on the operation)
     query: String,
 }
 
@@ -36,10 +37,38 @@ fn main() -> Result<()> {
     };
 
     // create a new database
-    let db = Database::new("data.csv".to_string());
+    let mut db = Database::new(DB_PATH.to_string());
 
-    println!("Operation: {:?}", operation);
-    println!("Query: {}", args.query);
+    // execute the operation
+    match operation {
+        Operation::Insert => {
+            // get the values from the query
+            let values: Vec<&str> = args.query.split(",").collect();
+            let values: Vec<String> = values.iter().map(|s| s.to_string()).collect();
+
+            // insert the values into the database
+            db.insert(values);
+        }
+        Operation::Delete => {
+            let id = args.query.parse::<u32>().unwrap();
+            db.delete(id);
+        }
+        Operation::SelectAll => {
+            let rows = db.select_all();
+
+            for row in rows {
+                println!("{:?}", row);
+            }
+        }
+        Operation::Get => {
+            let id = args.query.parse::<u32>().unwrap();
+
+            let row = db.get_row(id);
+            println!("{:?}", row);
+        }
+    }
+
+    db.save(DB_PATH.to_string());
 
     Ok(())
 }
