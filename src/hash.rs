@@ -1,3 +1,5 @@
+use std::collections::LinkedList;
+
 #[derive(Clone)]
 pub struct Element {
     pub key: String,
@@ -5,7 +7,7 @@ pub struct Element {
 }
 
 pub struct HashMap {
-    data: Vec<Option<Element>>,
+    data: Vec<Option<LinkedList<Element>>>,
 }
 
 impl HashMap {
@@ -16,8 +18,6 @@ impl HashMap {
             data: vec![None; MAP_SIZE],
         }
     }
-
-    // TODO: implement collision resolution
 
     fn hash(&self, key: String) -> usize {
         // calculate integer sum of each character in key, then mod by length of data
@@ -30,8 +30,9 @@ impl HashMap {
 
     pub fn insert(&mut self, key: String, value: String) {
         let index = self.hash(key.clone());
+        let list = self.data[index].get_or_insert(LinkedList::new());
 
-        self.data[index] = Some(Element { key, value });
+        list.push_back(Element { key, value });
     }
 
     pub fn delete(&mut self, key: String) {
@@ -42,10 +43,20 @@ impl HashMap {
 
     pub fn get(&self, key: String) -> Option<Element> {
         let index = self.hash(key.clone());
+        let list = self.data[index].clone();
 
-        match self.data[index] {
-            Some(ref element) => Some(element.clone()),
-            None => None,
+        if list.is_none() {
+            return None;
         }
+
+        let list = list.unwrap();
+
+        for element in list {
+            if element.key == key {
+                return Some(element);
+            }
+        }
+
+        None
     }
 }
