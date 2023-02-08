@@ -19,11 +19,11 @@ impl Database {
         db
     }
 
-    pub fn insert(&self, key: String, value: String) {
+    pub fn insert(&mut self, key: String, value: String) {
         self.map.insert(key, value);
     }
 
-    pub fn delete(&self, key: String) {
+    pub fn delete(&mut self, key: String) {
         self.map.delete(key);
     }
 
