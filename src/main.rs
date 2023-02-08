@@ -38,28 +38,43 @@ fn main() -> Result<()> {
     // create a new database
     let db = Database::new("data.csv".to_string());
 
-    // test hashmap
-    let mut map = HashMap::new();
-
-    map.insert("key".to_string(), "value".to_string());
-    map.insert("key2".to_string(), "value2".to_string());
-
-    let elem1 = map.get("key".to_string());
-    let elem2 = map.get("key2".to_string());
-
-    // print
-    println!("elem1: {:?}", elem1.unwrap().value);
-    println!("elem2: {:?}", elem2.unwrap().value);
-
-    map.delete("key2".to_string());
-
-    let elem2 = map.get("key2".to_string());
-    if elem2.is_none() {
-        println!("elem2 is none");
-    }
-
     println!("Operation: {:?}", operation);
     println!("Query: {}", args.query);
 
     Ok(())
+}
+
+// tests
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test() {
+        let mut db = Database::new("data.csv".to_string());
+
+        // insert a new row
+        db.insert(vec![
+            "John".to_string(),
+            "Doe".to_string(),
+            "john.doe@example.com".to_string(),
+        ]);
+
+        // check that the row was inserted
+        assert_eq!(db.get_column(1, "first_name".to_string()).unwrap(), "John");
+        assert_eq!(db.get_column(1, "last_name".to_string()).unwrap(), "Doe");
+        assert_eq!(
+            db.get_column(1, "email".to_string()).unwrap(),
+            "john.doe@example.com"
+        );
+
+        // check that the next id is correct
+        assert_eq!(db.next_id, 2);
+
+        // delete the row
+        db.delete(1);
+
+        // check that the row was deleted
+        assert_eq!(db.get_column(1, "first_name".to_string()), None);
+    }
 }

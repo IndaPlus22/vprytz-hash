@@ -3,35 +3,104 @@ use std::fs;
 
 pub struct Database {
     pub map: HashMap,
+    pub next_id: u32,
+    pub header: Vec<String>,
 }
 
 impl Database {
     pub fn new(file_path: String) -> Database {
         let mut db = Database {
             map: HashMap::new(),
+            next_id: 0,
+            header: vec![],
         };
         let contents = fs::read_to_string(file_path).expect("Unable to read file");
-        let lines = contents.lines();
+        let mut lines = contents.lines();
+
+        // header with column names
+        let header: Vec<&str> = lines.next().unwrap().split(",").collect();
+        let header: Vec<String> = header.iter().map(|s| s.to_string()).collect();
+        db.header = header.clone();
+        println!("header: {:?}", header);
+
         for line in lines {
             let parts: Vec<&str> = line.split(",").collect();
-            db.insert(parts[0].to_string(), parts[1].to_string());
+
+            // id is always the first column
+            let id = parts[0].parse::<u32>().unwrap();
+
+            // iterate over each part of the row, and insert into the hashmap
+            for (i, part) in parts.iter().enumerate() {
+                let key = format!("{}-{}", id, header[i]);
+                db.map.insert(key, part.to_string());
+            }
+            db.next_id = id + 1;
         }
         db
     }
 
-    pub fn insert(&mut self, key: String, value: String) {
-        self.map.insert(key, value);
+    pub fn save(&self, file_path: String) {
+        println!("Saving to {}", file_path);
     }
 
-    pub fn delete(&mut self, key: String) {
-        self.map.delete(key);
+    pub fn insert(&mut self, values: Vec<String>) {
+        // insert each value into the hashmap
+        for (i, value) in values.iter().enumerate() {
+            let key = format!("{}-{}", self.next_id, self.header[i + 1]);
+            self.map.insert(key, value.to_string());
+        }
+        self.next_id += 1;
     }
 
-    pub fn get(&self, key: String) {
-        self.map.get(key);
+    pub fn delete(&mut self, id: u32) {
+        for column in self.header.iter() {
+            let key = format!("{}-{}", id, column);
+            self.map.delete(key);
+        }
     }
 
-    pub fn select_all(&self) {
-        println!("Selecting all");
+    pub fn get_column(&self, id: u32, column: String) -> Option<String> {
+        let key = format!("{}-{}", id, column);
+        let elem = self.map.get(key);
+
+        if elem.is_none() {
+            return None;
+        }
+
+        return Some(elem.unwrap().value.clone());
+    }
+
+    pub fn get_row(&self, id: u32) -> Vec<String> {
+        let mut row = Vec::new();
+
+        for column in self.header.iter() {
+            let key = format!("{}-{}", id, column);
+            let elem = self.map.get(key);
+
+            if elem.is_none() {
+                continue;
+            }
+
+            row.push(elem.unwrap().value.clone());
+        }
+        return row;
+    }
+
+    pub fn select_all(&self) -> Vec<String> {
+        let mut all_columns = Vec::new();
+
+        for i in 0..self.next_id {
+            for column in self.header.iter() {
+                let key = format!("{}-{}", i, column);
+                let elem = self.map.get(key);
+
+                if elem.is_none() {
+                    continue;
+                }
+
+                all_columns.push(elem.unwrap().value.clone());
+            }
+        }
+        return all_columns;
     }
 }
