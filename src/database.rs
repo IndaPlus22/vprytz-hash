@@ -125,6 +125,10 @@ impl Database {
 
                 row.push(elem.unwrap().value.clone());
             }
+            // ignore empty rows
+            if row.len() == 0 {
+                continue;
+            }
             all_columns.push(row);
         }
         return all_columns;
