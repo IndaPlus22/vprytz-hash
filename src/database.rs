@@ -44,6 +44,10 @@ impl Database {
 
         for i in 0..self.next_id {
             let row = self.get_row(i);
+            // skip empty rows
+            if row.len() == 0 {
+                continue;
+            }
             rows.push(row);
         }
 
