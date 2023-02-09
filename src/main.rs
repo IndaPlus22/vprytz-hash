@@ -80,7 +80,12 @@ mod tests {
 
     #[test]
     fn test() {
-        let mut db = Database::new("data.csv".to_string());
+        // create new dummy CSV file for testing purposes
+        let contents = "id,first_name,last_name,email
+0,Vilhelm,Prytz,vilhelm@prytznet.se";
+        std::fs::write("test.csv", contents).unwrap();
+
+        let mut db = Database::new("test.csv".to_string());
 
         // insert a new row
         db.insert(vec![
@@ -105,5 +110,8 @@ mod tests {
 
         // check that the row was deleted
         assert_eq!(db.get_column(1, "first_name".to_string()), None);
+
+        // remove the dummy CSV file
+        std::fs::remove_file("test.csv").unwrap();
     }
 }

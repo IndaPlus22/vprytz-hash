@@ -79,16 +79,16 @@ impl Database {
         }
     }
 
-    // pub fn get_column(&self, id: u32, column: String) -> Option<String> {
-    //     let key = format!("{}-{}", id, column);
-    //     let elem = self.map.get(key);
+    pub fn get_column(&self, id: u32, column: String) -> Option<String> {
+        let key = format!("{}-{}", id, column);
+        let elem = self.map.get(key);
 
-    //     if elem.is_none() {
-    //         return None;
-    //     }
+        if elem.is_none() {
+            return None;
+        }
 
-    //     return Some(elem.unwrap().value.clone());
-    // }
+        return Some(elem.unwrap().value.clone());
+    }
 
     pub fn get_row(&self, id: u32) -> Vec<String> {
         let mut row = Vec::new();
