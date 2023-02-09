@@ -16,12 +16,44 @@ struct Cli {
     query: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum Operation {
     Insert,
     Delete,
     SelectAll,
     Get,
+    Interactive,
+}
+
+fn perform_operation(operation: Operation, query: String, db: &mut Database) {
+    match operation {
+        Operation::Insert => {
+            // get the values from the query
+            let values: Vec<&str> = query.split(",").collect();
+            let values: Vec<String> = values.iter().map(|s| s.to_string()).collect();
+
+            // insert the values into the database
+            db.insert(values);
+        }
+        Operation::Delete => {
+            let id = query.parse::<u32>().unwrap();
+            db.delete(id);
+        }
+        Operation::SelectAll => {
+            let rows = db.select_all();
+
+            for row in rows {
+                println!("{:?}", row);
+            }
+        }
+        Operation::Get => {
+            let id = query.parse::<u32>().unwrap();
+
+            let row = db.get_row(id);
+            println!("{:?}", row);
+        }
+        Operation::Interactive => panic!("This operation is not meant to be here!"),
+    }
 }
 
 fn main() -> Result<()> {
@@ -33,39 +65,48 @@ fn main() -> Result<()> {
         "delete" => Operation::Delete,
         "select_all" => Operation::SelectAll,
         "get" => Operation::Get,
+        "interactive" => Operation::Interactive,
         _ => panic!("Operation not supported"),
     };
 
     // create a new database
     let mut db = Database::new(DB_PATH.to_string());
 
-    // execute the operation
-    match operation {
-        Operation::Insert => {
-            // get the values from the query
-            let values: Vec<&str> = args.query.split(",").collect();
-            let values: Vec<String> = values.iter().map(|s| s.to_string()).collect();
+    // if operation is interactive, start the interactive shell
+    if operation == Operation::Interactive {
+        loop {
+            // get the operation from the user
+            let mut operation = String::new();
+            println!("Enter operation (insert, delete, select_all, get, quit):");
+            std::io::stdin()
+                .read_line(&mut operation)
+                .expect("Failed to read line");
+            let operation = operation.trim();
 
-            // insert the values into the database
-            db.insert(values);
-        }
-        Operation::Delete => {
-            let id = args.query.parse::<u32>().unwrap();
-            db.delete(id);
-        }
-        Operation::SelectAll => {
-            let rows = db.select_all();
+            // get the query from the user
+            let mut query = String::new();
+            println!("Enter query:");
+            std::io::stdin()
+                .read_line(&mut query)
+                .expect("Failed to read line");
+            let query = query.trim();
 
-            for row in rows {
-                println!("{:?}", row);
-            }
-        }
-        Operation::Get => {
-            let id = args.query.parse::<u32>().unwrap();
+            // map the operation to an enum
+            let operation = match operation {
+                "insert" => Operation::Insert,
+                "delete" => Operation::Delete,
+                "select_all" => Operation::SelectAll,
+                "get" => Operation::Get,
+                "quit" => break,
+                _ => panic!("Operation not supported"),
+            };
 
-            let row = db.get_row(id);
-            println!("{:?}", row);
+            // execute the operation
+            perform_operation(operation, query.to_string(), &mut db);
         }
+    } else {
+        // execute the operation
+        perform_operation(operation, args.query, &mut db);
     }
 
     db.save(DB_PATH.to_string());
