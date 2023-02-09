@@ -25,6 +25,20 @@ enum Operation {
     Interactive,
 }
 
+fn print_header(header: Vec<String>) {
+    for column in header.iter() {
+        print!("{: <20}", column);
+    }
+    println!();
+}
+
+fn print_row(row: Vec<String>) {
+    for column in row.iter() {
+        print!("{: <20}", column);
+    }
+    println!();
+}
+
 fn perform_operation(operation: Operation, query: String, db: &mut Database) {
     match operation {
         Operation::Insert => {
@@ -34,23 +48,32 @@ fn perform_operation(operation: Operation, query: String, db: &mut Database) {
 
             // insert the values into the database
             db.insert(values);
+
+            println!("Inserted row");
         }
         Operation::Delete => {
             let id = query.parse::<u32>().unwrap();
             db.delete(id);
+            println!("Deleted row with id {}", id)
         }
         Operation::SelectAll => {
             let rows = db.select_all();
 
+            // print header, then all rows
+            print_header(db.header.clone());
+
             for row in rows {
-                println!("{:?}", row);
+                print_row(row);
             }
         }
         Operation::Get => {
             let id = query.parse::<u32>().unwrap();
 
             let row = db.get_row(id);
-            println!("{:?}", row);
+
+            // print header and then row
+            print_header(db.header.clone());
+            print_row(row);
         }
         Operation::Interactive => panic!("This operation is not meant to be here!"),
     }
@@ -82,6 +105,15 @@ fn main() -> Result<()> {
                 .read_line(&mut operation)
                 .expect("Failed to read line");
             let operation = operation.trim();
+
+            match operation {
+                "quit" => break,
+                "select_all" => {
+                    perform_operation(Operation::SelectAll, "".to_string(), &mut db);
+                    continue;
+                }
+                _ => (),
+            }
 
             // get the query from the user
             let mut query = String::new();
