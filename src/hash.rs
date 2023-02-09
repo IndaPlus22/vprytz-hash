@@ -1,5 +1,3 @@
-use std::collections::LinkedList;
-
 #[derive(Clone, Debug)]
 pub struct Element {
     pub key: String,
@@ -7,7 +5,7 @@ pub struct Element {
 }
 
 pub struct HashMap {
-    data: Vec<Option<LinkedList<Element>>>,
+    data: Vec<Option<Vec<Element>>>,
 }
 
 impl HashMap {
@@ -30,15 +28,19 @@ impl HashMap {
 
     pub fn insert(&mut self, key: String, value: String) {
         let index = self.hash(key.clone());
-        let list = self.data[index].get_or_insert(LinkedList::new());
+        let list = self.data[index].get_or_insert(Vec::new());
 
-        list.push_back(Element { key, value });
+        list.push(Element { key, value });
     }
 
     pub fn delete(&mut self, key: String) {
         let index = self.hash(key.clone());
 
-        self.data[index] = None;
+        for (i, element) in self.data[index].clone().unwrap().iter().enumerate() {
+            if element.key == key {
+                self.data[index].as_mut().unwrap().remove(i);
+            }
+        }
     }
 
     pub fn get(&self, key: String) -> Option<Element> {
